@@ -4,12 +4,12 @@
 #include <stack>
 #include <map>
 
-// TODO: Remove
-#include <fstream>
+// // TODO: Remove
+// #include <fstream>
 
 using namespace std;
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define NO_ID 511111
 
@@ -18,13 +18,13 @@ using namespace std;
 #define NO_PUB_ACCESS 0
 #define HAS_PUB_ACCESS 1
 
-typedef struct system {
+typedef struct localSystem {
 	int money;
 	set<int> systemConnections;
 	int best;
 	bool hasBest;
 	bool hasAccessiblePub;
-} system;
+} localSystem;
 
 typedef struct intersection {
 	int parentCyclicSystem;
@@ -36,7 +36,7 @@ typedef struct intersection {
 } intersection;
 
 map<int,intersection> intersections;
-map<int,system> abstractedSystems;
+map<int,localSystem> abstractedSystems;
 int tarjanIdCounter;
 int cyclicSystemCounter;
 
@@ -95,12 +95,12 @@ void findCyclicSystems(int location) {
 		cyclicSystemCounter++;
 
 		if (DEBUG) {
-			cout << "Found cyclic system, assigning id " <<
+			cout << "Found cyclic localSystem, assigning id " <<
 				cyclicSystemCounter << endl;
 			cout << "Tarjan ID: " << intersections[location].tarjanId << endl;
 		}
 		
-		system newSystem;
+		localSystem newSystem;
 		newSystem.money = 0;
 		newSystem.hasAccessiblePub = false;
 		newSystem.best = 0;
@@ -110,7 +110,7 @@ void findCyclicSystems(int location) {
 			cur = backtrack.top();
 
 			if (DEBUG) {
-				cout << "Adding " << cur << " to system." << endl;
+				cout << "Adding " << cur << " to localSystem." << endl;
 			}
 
 			if (intersections[cur].isPub) {
@@ -124,40 +124,67 @@ void findCyclicSystems(int location) {
 
 			for (int i = 0; i < (int)intersections[cur].connections.size();
 					i++) {
-				intersection neighbour = intersections[cur].connections[i];
-				if (neighbour.parentCyclicSystem != cyclicSystemCounter) {
+				intersection neighbour = intersections[intersections[cur].connections[i]];
+				if (neighbour.parentCyclicSystem != cyclicSystemCounter &&
+					neighbour.parentCyclicSystem != NO_PARENT) {
 					// Has an external connection
 					newSystem.systemConnections.insert(
 						neighbour.parentCyclicSystem);
 				}
 			}
 		}
+
+		abstractedSystems[cyclicSystemCounter] = newSystem;
 	}
 }
 
 // Publess systems with no other connections have a value of 0.
-int findBestRoute(int startCyclicSystem) {
-	if (abstractedSystems[startCyclicSystem].empty()) {
+int findBestRoute(int cyclicSystem) {
+	if (abstractedSystems[cyclicSystem].hasBest) {
+		return abstractedSystems[cyclicSystem].best;
+	}
+
+	if (abstractedSystems[cyclicSystem].systemConnections.empty() &&
+		!abstractedSystems[cyclicSystem].hasAccessiblePub) {
+		if (DEBUG) {
+			cout << "localSystem " << cyclicSystem << " value set to 0 for not having a pub" << endl;
+		}
 		return 0;
 	}
 
-	int thisMoney = abstractedSystems[startCyclicSystem].money;
-	set<int> connections = abstractedSystems[startCyclicSystem].systemConnections;
+	int thisMoney = abstractedSystems[cyclicSystem].money;
+	set<int> connections = abstractedSystems[cyclicSystem].systemConnections;
 
-	int best = thisMoney;
+	int best = 0;
+
+	if (DEBUG) {
+		cout << "cyclic localSystem " << cyclicSystem << " has money " << best << endl;
+	}
 
 	set<int>::iterator it;
 	for (it = connections.begin(); it != connections.end(); it++) {
 		int externalSystem = *it;
-		best = max(best, thisMoney + findBestRoute(externalSystem));
+		int externalRoute = findBestRoute(externalSystem);
+
+		if (externalRoute == 0 && (!abstractedSystems[externalSystem].hasAccessiblePub) && (!abstractedSystems[cyclicSystem].hasAccessiblePub)) {
+
+		} else {
+			best = max(best, thisMoney + externalRoute);
+		}
 	}
+
+	if (best == 0 && abstractedSystems[cyclicSystem].hasAccessiblePub) {
+		best = thisMoney;
+	}
+
+	abstractedSystems[cyclicSystem].best = best;
 
 	return best;
 }
 
 int main() {
 	// TODO: Replace with cin
-	ifstream inputFile("atm.in");
+	// ifstream inputFile("atm.in");
 
 	tarjanIdCounter = 0;
 	cyclicSystemCounter = 0;
@@ -165,15 +192,15 @@ int main() {
 	int numIntersections;
 	int numRoads;
 
-	inputFile >> numIntersections;
-	inputFile >> numRoads;
+	cin >> numIntersections;
+	cin >> numRoads;
 
 	for (int i = 0; i < numRoads; i++) {
 		int start;
 		int end;
 
-		inputFile >> start;
-		inputFile >> end;
+		cin >> start;
+		cin >> end;
 
 		intersection thisIntersection;
 
@@ -194,7 +221,7 @@ int main() {
 
 		notSeen.insert(i);
 
-		inputFile >> thisIntersection.money;
+		cin >> thisIntersection.money;
 		thisIntersection.parentCyclicSystem = NO_PARENT;
 		thisIntersection.isPub = false;
 		thisIntersection.tarjanId = NO_ID;
@@ -205,23 +232,63 @@ int main() {
 	int startingPosition;
 	int numPubs;
 
-	inputFile >> startingPosition;
-	inputFile >> numPubs;
+	cin >> startingPosition;
+	cin >> numPubs;
 
 	for (int i = 0; i < numPubs; i++) {
 		int pubLocation;
-		inputFile >> pubLocation;
+		cin >> pubLocation;
 		intersections[pubLocation].isPub = true;
 	}
 
 	findCyclicSystems(startingPosition);
 
-	cout << "-------------------------------" << endl;
-	cout << "Starting finding best route..." << endl;
-	cout << "-------------------------------" << endl;
+	for (int i = 1; i <= numIntersections; i++) {
+		if (intersections[i].parentCyclicSystem == NO_PARENT) {
+			cyclicSystemCounter++;
+
+			localSystem newSystem;
+			newSystem.hasAccessiblePub = false;
+			newSystem.hasBest = false;
+			newSystem.best = 0;
+			newSystem.money = 0;
+
+			if (DEBUG) {
+				cout << "Creating left over " << i << " system." << endl;
+			}
+
+			if (intersections[i].isPub) {
+				newSystem.hasAccessiblePub = true;
+			}
+
+			newSystem.money += intersections[i].money;
+
+			backtrack.pop();
+			intersections[i].parentCyclicSystem = cyclicSystemCounter;
+
+			for (int i = 0; i < (int)intersections[i].connections.size();
+					i++) {
+				intersection neighbour = intersections[intersections[i].connections[i]];
+				if (neighbour.parentCyclicSystem != cyclicSystemCounter &&
+					neighbour.parentCyclicSystem != NO_PARENT) {
+					// Has an external connection
+					newSystem.systemConnections.insert(
+						neighbour.parentCyclicSystem);
+				}
+			}
+
+			abstractedSystems[cyclicSystemCounter] = newSystem;
+		}
+	}
+
+	if (DEBUG) {
+		cout << "-------------------------------" << endl;
+		cout << "Starting finding best route..." << endl;
+		cout << "-------------------------------" << endl;
+	}
 
 	int startingCyclicSystem =
 		intersections[startingPosition].parentCyclicSystem;
 
-
+	cout << findBestRoute(startingCyclicSystem) << endl;
 }
