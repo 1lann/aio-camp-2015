@@ -44,6 +44,10 @@ set<int> notSeen;
 stack<int> backtrack;
 
 bool hasBeenSeen(int location) {
+	if (notSeen.empty()) {
+		return true;
+	}
+
 	return notSeen.find(location) == notSeen.end();
 }
 
@@ -99,13 +103,13 @@ void findCyclicSystems(int location) {
 				cyclicSystemCounter << endl;
 			cout << "Tarjan ID: " << intersections[location].tarjanId << endl;
 		}
-		
+
 		localSystem newSystem;
 		newSystem.money = 0;
 		newSystem.hasAccessiblePub = false;
 		newSystem.best = 0;
 		newSystem.hasBest = false;
- 
+
 		while (cur != location) {
 			cur = backtrack.top();
 
@@ -242,44 +246,6 @@ int main() {
 	}
 
 	findCyclicSystems(startingPosition);
-
-	for (int i = 1; i <= numIntersections; i++) {
-		if (intersections[i].parentCyclicSystem == NO_PARENT) {
-			cyclicSystemCounter++;
-
-			localSystem newSystem;
-			newSystem.hasAccessiblePub = false;
-			newSystem.hasBest = false;
-			newSystem.best = 0;
-			newSystem.money = 0;
-
-			if (DEBUG) {
-				cout << "Creating left over " << i << " system." << endl;
-			}
-
-			if (intersections[i].isPub) {
-				newSystem.hasAccessiblePub = true;
-			}
-
-			newSystem.money += intersections[i].money;
-
-			backtrack.pop();
-			intersections[i].parentCyclicSystem = cyclicSystemCounter;
-
-			for (int i = 0; i < (int)intersections[i].connections.size();
-					i++) {
-				intersection neighbour = intersections[intersections[i].connections[i]];
-				if (neighbour.parentCyclicSystem != cyclicSystemCounter &&
-					neighbour.parentCyclicSystem != NO_PARENT) {
-					// Has an external connection
-					newSystem.systemConnections.insert(
-						neighbour.parentCyclicSystem);
-				}
-			}
-
-			abstractedSystems[cyclicSystemCounter] = newSystem;
-		}
-	}
 
 	if (DEBUG) {
 		cout << "-------------------------------" << endl;
