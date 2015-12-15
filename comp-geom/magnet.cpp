@@ -6,7 +6,7 @@
 using namespace std;
 
 unsigned long long gcd(unsigned long long a, unsigned long long b) {
-    return b == 0 ? a : gcd(b, a % b);
+	return b == 0 ? a : gcd(b, a % b);
 }
 
 typedef struct Rat {
@@ -139,6 +139,17 @@ typedef struct Rat {
 		return (*this) + (-r);
 	}
 
+	void operator=(const int number) {
+		this->isPositive = true;
+
+		if (number < 0) {
+			this->isPositive = false;
+		}
+
+		this->numerator = number;
+		this->denominator = 1;
+	}
+
 	void normalize() {
 		unsigned long long divideBy = gcd(this->numerator, this->denominator);
 		if (divideBy > 1) {
@@ -159,6 +170,16 @@ typedef struct Rat {
 		}
 
 		return sign * (((double)this->numerator)/((double)this->denominator));
+	}
+
+	ostream& operator<<(ostream& os) {
+		if (this->isPositive) {
+			os << this->numerator << "/" << this->denominator;
+		} else {
+			os << "-" << this->numerator << "/" << this->denominator;
+		}
+
+		return os;
 	}
 
 	string toFractionString() {
@@ -210,6 +231,64 @@ Rat newRatFromDouble(double number, int accuracy) {
 	return newRat((long long)(number * denominator), denominator);
 }
 
+Rat newRatFromInt(int number) {
+	return newRat((long long)number, 1);
+}
+
+typedef struct Line {
+	Rat startX;
+	Rat startY;
+	Rat endX;
+	Rat endY;
+} Line;
+
+bool testIntersection(Line lineA, Line lineB) {
+	Rat x0 = lineA.startX;
+	Rat y0 = lineA.startY;
+	Rat x1 = lineA.endX;
+	Rat y1 = lineA.endY;
+
+	Rat x2 = lineB.startX;
+	Rat y2 = lineB.startY;
+	Rat x3 = lineB.endX;
+	Rat y3 = lineB.endY;
+
+	Rat aTop = ((x3-x2)*(y0-y2)-((y3-y2)*(x0-x2)));
+	Rat aBottom = ((y3-y2)*(x1-x0)-((x3-x2)*(y1-y0)));
+	Rat bTop = ((x1-x0)*(y0-y2)-((y1-y0)*(x0-x2)));
+	Rat bBottom = ((y3-y2)*(x1-x0)-((x3-x2)*(y1-y0)));
+
+	Rat a = aTop/aBottom;
+	Rat b = bTop/bBottom;
+
+	cout << a.toFractionString() << endl;
+
+	if ((newRat(0, 1) <= a) && (newRat(1, 1) >= a) && (newRat(0, 1) <= b) && (newRat(1, 1) >= b)) {
+		return true;
+	}
+
+	return false;
+}
+
 int main() {
-	int startX, startY;
+	// ifstream inputFile("")
+
+	// int startX, startY, endX, endY, timeTaken;
+	// inputFile >> startX >> startY >> endX >> endY >> timeTaken;
+
+	Line lineA;
+	lineA.startX = 0;
+	lineA.startY = 0;
+	lineA.endX = 2;
+	lineA.endY = 2;
+
+	Line lineB;
+	lineB.startX = 0;
+	lineB.startY = 2;
+	lineB.endX = 4;
+	lineB.endY = 0;
+
+	cout << testIntersection(lineA, lineB) << endl;
+
+	cout << lineB.endX << endl;
 }
