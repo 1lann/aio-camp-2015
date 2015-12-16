@@ -82,7 +82,7 @@ typedef struct Rat {
 			}
 		} else {
 			rat.numerator = rightNumerator + thisNumerator;
-			rat.isPositive = true;
+			rat.isPositive = false;
 		}
 
 		rat.denominator = this->denominator * r.denominator;
@@ -172,15 +172,15 @@ typedef struct Rat {
 		return sign * (((double)this->numerator)/((double)this->denominator));
 	}
 
-	ostream& operator<<(ostream& os) {
-		if (this->isPositive) {
-			os << this->numerator << "/" << this->denominator;
-		} else {
-			os << "-" << this->numerator << "/" << this->denominator;
-		}
+	// ostream& operator<<(ostream& os) {
+	// 	if (this->isPositive) {
+	// 		os << this->numerator << "/" << this->denominator;
+	// 	} else {
+	// 		os << "-" << this->numerator << "/" << this->denominator;
+	// 	}
 
-		return os;
-	}
+	// 	return os;
+	// }
 
 	string toFractionString() {
 		string s;
@@ -261,8 +261,6 @@ bool testIntersection(Line lineA, Line lineB) {
 	Rat a = aTop/aBottom;
 	Rat b = bTop/bBottom;
 
-	cout << a.toFractionString() << endl;
-
 	if ((newRat(0, 1) <= a) && (newRat(1, 1) >= a) && (newRat(0, 1) <= b) && (newRat(1, 1) >= b)) {
 		return true;
 	}
@@ -288,7 +286,11 @@ int main() {
 	lineB.endX = 4;
 	lineB.endY = 0;
 
+	cout << "compare" << endl;
 	cout << testIntersection(lineA, lineB) << endl;
-
-	cout << lineB.endX << endl;
+	cout << (newRat(1, 10) + newRat(2, 10)).toFractionString() << endl;
+	
+	double a = 0.1;
+	double b = 0.2;
+	cout << a + b << endl;
 }
