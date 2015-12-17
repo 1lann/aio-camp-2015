@@ -100,7 +100,7 @@ int main() {
 						if (adj[c][d] >= 'A' && adj[c][d] <= 'Z') {
 							// cout << nBalanced[a][c][j] << ":" << nValid[d][k-1-j] << endl;
 							nValid[a][k] += nBalanced[a][c][j] * nValid[d][k-1-j];
-							if (a == 1 && k == 5 && nBalanced[a][c][j] > 0 && nValid[d][k-1-j] > 0) {
+							if ((k-1-j) == 5 && nBalanced[a][c][j] > 0 && nValid[d][k-1-j] > 0) {
 								cout << "balanced from " << a << ":" << c << endl;
 								cout << "valid from " << d << ":" << N << endl;
 								cout << "balance: " << nBalanced[a][c][j] << endl;
